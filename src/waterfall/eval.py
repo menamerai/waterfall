@@ -1,7 +1,8 @@
 import os
 from dataclasses import dataclass
 
-from sklearn.metrics import classification_report
+from numpy import ndarray
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from transformers import TextGenerationPipeline
 
 from .base import EvalPipeline
@@ -19,7 +20,9 @@ class WinograndeEval(EvalPipeline):
             self.model, self.tokenizer, max_new_tokens=1, return_full_text=False
         )
 
-    def run(self, output_dir: str | None = None, output_dict: bool = False):
+    def run(
+        self, output_dir: str | None = None, output_dict: bool = False
+    ) -> tuple[str | dict, float, ndarray]:
         preds = []
         for row in self.dataset:
             preds.append(self.evaluate_row(row))
@@ -31,8 +34,16 @@ class WinograndeEval(EvalPipeline):
                 for pred in preds:
                     f.write(pred + "\n")
 
-        return self.calculate_metrics(
-            preds, self.dataset["answer"], output_dict=output_dict
+        print("Finished evaluating")
+        print("Calculating metrics")
+        print(self.dataset["answer"])
+        print(preds)
+        return (
+            self.calculate_metrics(
+                preds, self.dataset["answer"], output_dict=output_dict
+            ),
+            accuracy_score(self.dataset["answer"], preds),
+            confusion_matrix(self.dataset["answer"], preds, labels=["1", "2"]),
         )
 
     def evaluate_row(self, row: dict[str, str]) -> str:
@@ -47,7 +58,7 @@ class WinograndeEval(EvalPipeline):
 
     def calculate_metrics(
         self, preds: list[str], answers: list[str], output_dict: bool = False
-    ) -> str:
+    ) -> str | dict:
         return classification_report(
-            answers, preds, labels=[1, 2], output_dict=output_dict
+            answers, preds, labels=["1", "2"], output_dict=output_dict
         )
