@@ -6,6 +6,16 @@ from datasets import Dataset
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
+class PromptGeneratorBase(ABC):
+    @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def __call__(self) -> str:
+        pass
+
+
 @dataclass(kw_only=True)
 class Pipeline(ABC):
     @abstractmethod
@@ -22,18 +32,8 @@ class EvalPipeline(Pipeline):
     model: PreTrainedModel
     tokenizer: PreTrainedTokenizerBase
     dataset: Dataset
-    prompt_generator: Callable
+    prompt_generator: Callable | PromptGeneratorBase  # or PromptGeneratorBase
 
     @abstractmethod
     def calculate_metrics(self):
-        pass
-
-
-class PromptGeneratorBase(ABC):
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def __call__(self) -> str:
         pass

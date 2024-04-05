@@ -3,10 +3,7 @@ from .constants import winogrande_examples
 
 
 class WinograndeBaselinePromptGenerator(PromptGeneratorBase):
-    def __init__(self, examples: list[dict[str, str]] | None):
-        if examples is None:
-            examples = winogrande_examples
-
+    def __init__(self, examples: list[dict[str, str]] = winogrande_examples):
         self.prompt = "The following sentence is missing a word. Please select the option that best fits the blank.\n\n"
         for example in examples:
             self.prompt += f"Sentence: {example['sentence']}\n"
@@ -14,9 +11,10 @@ class WinograndeBaselinePromptGenerator(PromptGeneratorBase):
             self.prompt += f"Option 2: {example['option2']}\n"
             self.prompt += f"Answer: {example['answer']}\n\n"
 
-    def __call__(self, doc: dict[str, str]):
+    def __call__(self, doc: dict[str, str]) -> str:
         prompt = self.prompt
         prompt += f"Sentence: {doc['sentence']}\n"
         prompt += f"Option 1: {doc['option1']}\n"
         prompt += f"Option 2: {doc['option2']}\n"
         prompt += "Answer: "
+        return prompt

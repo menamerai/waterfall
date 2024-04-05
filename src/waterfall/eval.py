@@ -1,5 +1,7 @@
+import os
 from dataclasses import dataclass
 
+from sklearn.metrics import classification_report
 from transformers import TextGenerationPipeline
 
 from .base import EvalPipeline
@@ -17,12 +19,21 @@ class WinograndeEval(EvalPipeline):
             self.model, self.tokenizer, max_new_tokens=1, return_full_text=False
         )
 
-    def run(self):
+    def run(self, output_dir: str | None = None, output_dict: bool = False):
         preds = []
         for row in self.dataset:
             preds.append(self.evaluate_row(row))
 
-        return self.calculate_metrics(preds, self.dataset["answer"])
+        if output_dir:
+            if not os.path.exists(os.path.dirname(output_dir)):
+                os.makedirs(os.path.dirname(output_dir))
+            with open(output_dir, "w") as f:
+                for pred in preds:
+                    f.write(pred + "\n")
+
+        return self.calculate_metrics(
+            preds, self.dataset["answer"], output_dict=output_dict
+        )
 
     def evaluate_row(self, row: dict[str, str]) -> str:
         assert "sentence" in row, "Row must contain a sentence"
@@ -34,5 +45,9 @@ class WinograndeEval(EvalPipeline):
         output = self.generator(prompt)[0]["generated_text"].strip()
         return output
 
-    def calculate_metrics(self, preds: list[str], labels: list[str]):
-        return "Not implemented yet"
+    def calculate_metrics(
+        self, preds: list[str], answers: list[str], output_dict: bool = False
+    ) -> str:
+        return classification_report(
+            answers, preds, labels=[1, 2], output_dict=output_dict
+        )

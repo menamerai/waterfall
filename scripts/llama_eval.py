@@ -1,3 +1,4 @@
+import json
 import os
 
 from datasets import load_dataset
@@ -13,7 +14,7 @@ hf_token = os.environ.get("HF_TOKEN")
 
 tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", token=hf_token)
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-7b-hf", load_in_8bit=True, token=hf_token
+    "meta-llama/Llama-2-7b-hf", load_in_4bit=True, token=hf_token
 )
 data = load_dataset("winogrande", "winogrande_xs", split="validation[:5]")
 
@@ -24,4 +25,7 @@ evaluator = WinograndeEval(
     prompt_generator=WinograndeBaselinePromptGenerator(),
 )
 
-print(evaluator.run())
+
+out = evaluator.run(output_dir="./output/llama_eval_output.lst", output_dict=True)
+with open("./output/llama_eval_output.json", "w") as f:
+    json.dump(out, f)
